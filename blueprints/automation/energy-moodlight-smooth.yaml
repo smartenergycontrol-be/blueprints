@@ -1,0 +1,87 @@
+blueprint:
+  name: Moodlight Smooth
+  description: Change the color of a light smoothly based on power consumption and solar power.
+  domain: automation
+  input:
+    solar_power_sensor:
+      name: Solar Power Sensor
+      description: Sensor entity ID for solar power
+      selector:
+        entity:
+          domain: sensor
+    power_consumed_sensor:
+      name: Power Consumed Sensor
+      description: Sensor entity ID for power consumed
+      selector:
+        entity:
+          domain: sensor
+    light_to_control:
+      name: Light to Control
+      description: Light entity ID to control
+      selector:
+        entity:
+          domain: light
+    min_value:
+      name: Minimum Value
+      description: Minimum value for normalization
+      default: -3000
+      selector:
+        number:
+          min: -10000
+          max: 0
+          unit_of_measurement: ''
+    max_value:
+      name: Maximum Value
+      description: Maximum value for normalization
+      default: 2500
+      selector:
+        number:
+          min: 0
+          max: 10000
+          unit_of_measurement: ''
+  source_url: https://example.com/moodlight_smooth
+trigger:
+  - platform: state
+    entity_id: !input 'solar_power_sensor'
+  - platform: state
+    entity_id: !input 'power_consumed_sensor'
+condition:
+  - condition: device
+    type: is_on
+    device_id: !input 'light_to_control'
+    entity_id: !input 'light_to_control'
+    domain: light
+action:
+  - service: light.turn_on
+    target:
+      entity_id: !input 'light_to_control'
+    data:
+      rgb_color: >
+        {% set colors = [
+          [0, 255, 0],
+          [255, 255, 0],
+          [255, 165, 0],
+          [255, 0, 0],
+          [128, 0, 128]
+        ] %}
+        {% set min_val = !input 'min_value' %}
+        {% set max_val = !input 'max_value' %}
+        {% set house = states(!input 'power_consumed_sensor') | float %}
+        {% set solar = states(!input 'solar_power_sensor') | float %}
+        {% set value = house - solar %}
+        {% set normalized = (value - min_val) / (max_val - min_val) %}
+        {% set num_colors = colors | length %}
+        {% set segment = (num_colors - 1) * normalized %}
+        {% set index = segment | int %}
+        {% set weight = segment - index %}
+
+        {% if index < num_colors - 1 %}
+          {% set r = (colors[index][0] * (1 - weight) + colors[index + 1][0] * weight) | int %}
+          {% set g = (colors[index][1] * (1 - weight) + colors[index + 1][1] * weight) | int %}
+          {% set b = (colors[index][2] * (1 - weight) + colors[index + 1][2] * weight) | int %}
+        {% else %}
+          {% set r, g, b = colors[-1] %}
+        {% endif %}
+
+        [{{ r }}, {{ g }}, {{ b }}]
+mode: single
