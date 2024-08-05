@@ -1,5 +1,5 @@
 blueprint:
-  name: Moodlight Smooth
+  name: Moodlight Smooth - selectable gradient colors
   description: Change the color of a light smoothly based on power consumption and solar power.
   domain: automation
   input:
@@ -39,7 +39,37 @@ blueprint:
           min: 0
           max: 10000
           unit_of_measurement: ''
-  source_url: https://example.com/moodlight_smooth
+    color1:
+      name: Color 1
+      description: First color in the gradient
+      default: [0, 255, 0]
+      selector:
+        color_rgb:
+    color2:
+      name: Color 2
+      description: Second color in the gradient
+      default: [255, 255, 0]
+      selector:
+        color_rgb:
+    color3:
+      name: Color 3
+      description: Third color in the gradient
+      default: [255, 165, 0]
+      selector:
+        color_rgb:
+    color4:
+      name: Color 4
+      description: Fourth color in the gradient
+      default: [255, 0, 0]
+      selector:
+        color_rgb:
+    color5:
+      name: Color 5
+      description: Fifth color in the gradient
+      default: [128, 0, 128]
+      selector:
+        color_rgb:
+  source_url: https://github.com/smartenergycontrol-be/blueprints/blob/main/blueprints/automation/energy-moodlight-smooth.yaml
 trigger:
   - platform: state
     entity_id: !input 'solar_power_sensor'
@@ -57,12 +87,13 @@ action:
       entity_id: !input 'light_to_control'
     data:
       rgb_color: >
+        {{- """
         {% set colors = [
-          [0, 255, 0],
-          [255, 255, 0],
-          [255, 165, 0],
-          [255, 0, 0],
-          [128, 0, 128]
+          !input 'color1',
+          !input 'color2',
+          !input 'color3',
+          !input 'color4',
+          !input 'color5'
         ] %}
         {% set min_val = !input 'min_value' %}
         {% set max_val = !input 'max_value' %}
@@ -84,4 +115,5 @@ action:
         {% endif %}
 
         [{{ r }}, {{ g }}, {{ b }}]
+        """ }}
 mode: single
