@@ -76,11 +76,9 @@ trigger:
   - platform: state
     entity_id: !input 'power_consumed_sensor'
 condition:
-  - condition: device
-    type: is_on
-    device_id: !input 'light_to_control'
+  - condition: state
     entity_id: !input 'light_to_control'
-    domain: light
+    state: "on"
 action:
   - service: light.turn_on
     target:
