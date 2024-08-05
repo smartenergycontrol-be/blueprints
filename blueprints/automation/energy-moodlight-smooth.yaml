@@ -55,6 +55,7 @@ action:
       entity_id: !input 'light_to_control'
     data:
       rgb_color: >
+        {{- """
         {% set colors = [
           [0, 255, 0],
           [255, 255, 0],
@@ -82,4 +83,5 @@ action:
         {% endif %}
 
         [{{ r }}, {{ g }}, {{ b }}]
+        """ }}
 mode: single
