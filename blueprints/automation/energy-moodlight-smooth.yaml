@@ -1,5 +1,5 @@
 blueprint:
-  name: Moodlight Smooth - selectable gradient colors
+  name: Moodlight Smooth green - yellow - orange - red - purple
   description: Change the color of a light smoothly based on power consumption and solar power.
   domain: automation
   input:
@@ -85,7 +85,6 @@ action:
       entity_id: !input 'light_to_control'
     data:
       rgb_color: >
-        {{- """
         {% set colors = [
           !input 'color1',
           !input 'color2',
@@ -113,5 +112,4 @@ action:
         {% endif %}
 
         [{{ r }}, {{ g }}, {{ b }}]
-        """ }}
 mode: single

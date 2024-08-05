@@ -1,6 +1,6 @@
 blueprint:
-  name: Energy Moodlight Smooth green - yellow - orange - red - purple
-  description: Change the color of a light smoothly based on power consumption and solar power.
+  name: Energy Moodlight Smooth - selectable gradient colors
+  description: Change the color of a light smoothly based on power consumption and solar power. Version with selectable gradient colors.
   domain: automation
   input:
     solar_power_sensor:
