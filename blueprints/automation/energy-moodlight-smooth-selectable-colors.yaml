@@ -72,31 +72,32 @@ blueprint:
   source_url: https://github.com/smartenergycontrol-be/blueprints/blob/main/blueprints/automation/energy-moodlight-smooth.yaml
 trigger:
   - platform: state
-    entity_id: !input 'solar_power_sensor'
+    entity_id: !input solar_power_sensor
   - platform: state
-    entity_id: !input 'power_consumed_sensor'
+    entity_id: !input power_consumed_sensor
 condition:
   - condition: state
-    entity_id: !input 'light_to_control'
-    state: "on"
+    entity_id: !input light_to_control
+    state: 'on'
 action:
+  - variables:
+      colors:
+        - !input color1
+        - !input color2
+        - !input color3
+        - !input color4
+        - !input color5
+      min_val: !input min_value
+      max_val: !input max_value
+      power_consumed_sensor: !input power_consumed_sensor
+      solar_power_sensor: !input solar_power_sensor
   - service: light.turn_on
     target:
-      entity_id: !input 'light_to_control'
+      entity_id: !input light_to_control
     data:
       rgb_color: >
-        {{- """
-        {% set colors = [
-          !input 'color1',
-          !input 'color2',
-          !input 'color3',
-          !input 'color4',
-          !input 'color5'
-        ] %}
-        {% set min_val = !input 'min_value' %}
-        {% set max_val = !input 'max_value' %}
-        {% set house = states(!input 'power_consumed_sensor') | float %}
-        {% set solar = states(!input 'solar_power_sensor') | float %}
+        {% set house = states(power_consumed_sensor) | float %}
+        {% set solar = states(solar_power_sensor) | float %}
         {% set value = house - solar %}
         {% set normalized = (value - min_val) / (max_val - min_val) %}
         {% set num_colors = colors | length %}
@@ -113,5 +114,4 @@ action:
         {% endif %}
 
         [{{ r }}, {{ g }}, {{ b }}]
-        """ }}
 mode: single
