@@ -1,0 +1,122 @@
+blueprint:
+  name: Energy Moodlight Smooth - Based on Energy Price
+  description: Change the color of a light smoothly based on current energy price. Uses color interpolation across 5 user-defined RGB colors.
+  domain: automation
+  input:
+    energy_price_sensor:
+      name: Energy Price Sensor
+      description: Sensor entity ID for the energy price in €/kWh
+      selector:
+        entity:
+          domain: sensor
+    light_to_control:
+      name: Light to Control
+      description: Light entity ID to control
+      selector:
+        entity:
+          domain: light
+    min_value:
+      name: Minimum Energy Price
+      description: Lowest expected price (€/kWh) for color mapping
+      default: 0.10
+      selector:
+        number:
+          min: 0.00
+          max: 1.00
+          step: 0.01
+          unit_of_measurement: '€/kWh'
+    max_value:
+      name: Maximum Energy Price
+      description: Highest expected price (€/kWh) for color mapping
+      default: 0.25
+      selector:
+        number:
+          min: 0.00
+          max: 2.00
+          step: 0.01
+          unit_of_measurement: '€/kWh'
+    color1:
+      name: Color 1
+      default: [0, 255, 0]
+      selector:
+        color_rgb:
+    color2:
+      name: Color 2
+      default: [255, 255, 0]
+      selector:
+        color_rgb:
+    color3:
+      name: Color 3
+      default: [255, 165, 0]
+      selector:
+        color_rgb:
+    color4:
+      name: Color 4
+      default: [255, 0, 0]
+      selector:
+        color_rgb:
+    color5:
+      name: Color 5
+      default: [128, 0, 128]
+      selector:
+        color_rgb:
+
+trigger:
+  - platform: state
+    entity_id: !input energy_price_sensor
+
+condition:
+  - condition: state
+    entity_id: !input light_to_control
+    state: 'on'
+
+variables:
+  price: "{{ states(energy_price_sensor) | float }}"
+  min_val: !input min_value
+  max_val: !input max_value
+  colors:
+    - !input color1
+    - !input color2
+    - !input color3
+    - !input color4
+    - !input color5
+
+action:
+  - variables:
+      normalized: >
+        {% set n = (price - min_val) / (max_val - min_val) %}
+        {% if n < 0 %} 0
+        {% elif n > 1 %} 1
+        {% else %} {{ n }}
+        {% endif %}
+      num_colors: "{{ colors | length }}"
+      segment: "{{ (num_colors - 1) * normalized }}"
+      index: "{{ segment | int }}"
+      weight: "{{ segment - index }}"
+      r: >
+        {% if index < num_colors - 1 %}
+          {{ (colors[index][0] * (1 - weight) + colors[index + 1][0] * weight) | int }}
+        {% else %}
+          {{ colors[-1][0] }}
+        {% endif %}
+      g: >
+        {% if index < num_colors - 1 %}
+          {{ (colors[index][1] * (1 - weight) + colors[index + 1][1] * weight) | int }}
+        {% else %}
+          {{ colors[-1][1] }}
+        {% endif %}
+      b: >
+        {% if index < num_colors - 1 %}
+          {{ (colors[index][2] * (1 - weight) + colors[index + 1][2] * weight) | int }}
+        {% else %}
+          {{ colors[-1][2] }}
+        {% endif %}
+
+  - service: light.turn_on
+    target:
+      entity_id: !input light_to_control
+    data:
+      rgb_color: ["{{ r }}", "{{ g }}", "{{ b }}"]
+      brightness_pct: 100
+
+mode: single
